@@ -30,4 +30,4 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Advent of Code 🎄
-      run: cargo aoc
+      run: cargo aoc 2>/dev/null
