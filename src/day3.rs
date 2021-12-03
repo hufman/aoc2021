@@ -28,13 +28,11 @@ pub fn input_generator(input: &str) -> Vec<Vec<u8>> {
 
 #[aoc(day3, part1)]
 pub fn solve_part1(data: &[Vec<u8>]) -> u32 {
-    let gamma_str: Vec<u8> = data.first()
-        .unwrap()
-        .iter()
-        .enumerate()
-        .map(|(i, _)| most_common_bit(data, i))
+    let len = data.first().unwrap().len();
+    let gamma_str: Vec<u8> = (0..len)
+        .map(|i| most_common_bit(data, i))
         .collect();
-    let gamma =  to_u32(gamma_str.as_slice());
+    let gamma = to_u32(gamma_str.as_slice());
     let epsilon_str: Vec<u8> = gamma_str.iter()
         .map(|c| if *c == 0 { 1 } else { 0 })
         .collect();
