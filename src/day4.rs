@@ -19,7 +19,7 @@ pub struct BingoSquare {
 }
 impl fmt::Debug for BingoSquare {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(self.num.to_string().as_str());
+        let _ = f.write_fmt(format_args!("{: >2}", self.num));
         if self.marked {
             f.write_str("*")
         } else {
@@ -27,9 +27,18 @@ impl fmt::Debug for BingoSquare {
         }
     }
 }
-#[derive(Debug)]
 pub struct BingoBoardSolution {
     rows: Vec<Vec<BingoSquare>>
+}
+impl fmt::Debug for BingoBoardSolution {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let _ = f.write_str("BingoBoardSolution{\n");
+        for row in self.rows.iter() {
+            let _ = f.debug_list().entries(row.iter()).finish();
+            let _ = f.write_str("\n");
+        }
+        f.write_str("")
+    }
 }
 impl From<&BingoBoard> for BingoBoardSolution {
     fn from(input: &BingoBoard) -> Self {
@@ -48,19 +57,21 @@ impl BingoBoardSolution {
             row.iter().all(|c| c.marked)
         );
         // column checks
-        let bingo_vertical = (0..4).any(|col_index|
+        let bingo_vertical = (0..5).any(|col_index|
             self.rows.iter().all(|row|
                 row[col_index].marked
             )
         );
         // slash checks
-        let bingo_backslash = (0..4).all(|i|
+        /* not in this game, apparently
+        let bingo_backslash = (0..5).all(|i|
             self.rows[i][i].marked
         );
-        let bingo_slash = (0..4).all(|i|
+        let bingo_slash = (0..5).all(|i|
             self.rows[i][4-i].marked
         );
-        bingo_horizontal || bingo_vertical || bingo_backslash || bingo_slash
+         */
+        bingo_horizontal || bingo_vertical
     }
 }
 
@@ -96,11 +107,14 @@ pub fn solve_part1(bingo: &Bingo) -> u32 {
         .map(|b| BingoBoardSolution::from(b))
         .collect();
     for n in bingo.input.as_slice() {
+        // print!("{} ->", n);
         boards.iter_mut().for_each(|b|
             mark_cell(b, *n)
         );
+        // println!("{:?}", boards);
         for board in boards.iter() {
             if board.is_bingo() {
+                // println!("Found winner! {:?}", board);
                 return score_board(board.borrow()) * (*n as u32);
             }
         }
