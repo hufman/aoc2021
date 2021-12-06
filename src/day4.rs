@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 use std::fmt;
-use std::fmt::{Formatter, Write};
+use std::fmt::{Formatter};
 
 #[derive(Debug)]
 pub struct BingoBoard {
