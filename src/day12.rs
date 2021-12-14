@@ -56,6 +56,24 @@ pub struct AocGraphPuzzle {
     neighbors: HashMap<String, Vec<String>>,
     spare_time: bool,
 }
+impl AocGraphPuzzle {
+    fn is_valid_move(&self, node_name: &String) -> bool {
+        let node = &self.nodes[node_name];
+        node.node_type == LARGE ||
+        (node.node_type == SMALL && !node.visited) ||
+        (node.node_type == SMALL && node.visited && self.spare_time)
+    }
+
+    fn do_move(&self, node_name: &String) -> AocGraphPuzzle {
+        let mut nodes = self.nodes.to_owned();
+        let using_spare_time = nodes[node_name].node_type == SMALL && nodes[node_name].visited;
+        let new_node = AocGraphNode{name: node_name.to_string(), node_type: nodes[node_name].node_type.clone(), visited: true};
+        nodes.insert(node_name.to_string(), new_node);
+        AocGraphPuzzle{nodes,
+            neighbors: self.neighbors.to_owned(),
+            spare_time: self.spare_time && !using_spare_time}
+    }
+}
 
 #[aoc_generator(day12)]
 pub fn input_generator(input: &str) -> AocGraphPuzzle {
@@ -91,7 +109,9 @@ fn build_graph_neighbors(lines: &[AocGraphSegment]) -> HashMap<String, Vec<Strin
     let mut result: HashMap<String, Vec<String>> = HashMap::with_capacity(lines.len());
     lines.iter().for_each(|segment: &AocGraphSegment| {
         result.entry(segment.left.name.clone()).or_insert(Vec::new()).push(segment.right.name.clone());
-        result.entry(segment.right.name.clone()).or_insert(Vec::new()).push(segment.left.name.clone());
+        if segment.left.name != "start" && segment.right.name != "end" {     // don't double back on special nodes
+            result.entry(segment.right.name.clone()).or_insert(Vec::new()).push(segment.left.name.clone());
+        }
     });
     result
 }
@@ -108,28 +128,17 @@ pub fn solve_part2(puzzle: &AocGraphPuzzle) -> u64 {
     count_routes(&mut solution, &"start".to_string())
 }
 
-fn count_routes(puzzle: &mut AocGraphPuzzle, starting: &String) -> u64 {
+fn count_routes(puzzle: &AocGraphPuzzle, starting: &String) -> u64 {
     let mut route_count = 0;
-    // we are using up spare time in this room
-    let had_spare_time = puzzle.spare_time;
-    let bonus_time = puzzle.spare_time && puzzle.nodes[starting].node_type == SMALL && puzzle.nodes[starting].visited;
-    puzzle.spare_time = puzzle.spare_time && !bonus_time;
-    puzzle.nodes.get_mut(starting).unwrap().visited = true;
-
     let neighbors = puzzle.neighbors[starting].to_owned();
     neighbors.iter().for_each(|node_name: &String| {
-        let node = puzzle.nodes[node_name].to_owned();
-        if node.node_type == LARGE ||
-            (node.node_type == SMALL && !node.visited) ||
-            (node.node_type == SMALL && node.visited && puzzle.spare_time) {
-            route_count += count_routes(puzzle, &node.name)
-        };
-        if node.node_type == END {
+        if puzzle.is_valid_move(&node_name) {
+            let new_state = puzzle.do_move(node_name);
+            route_count += count_routes(&new_state, node_name);
+        }
+        if puzzle.nodes[node_name].node_type == END {
             route_count += 1
         }
     });
-    // unwind this visit state
-    puzzle.nodes.get_mut(starting).unwrap().visited = bonus_time;
-    puzzle.spare_time = had_spare_time;
     route_count
 }
