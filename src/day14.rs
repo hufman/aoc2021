@@ -25,37 +25,57 @@ pub fn input_generator(input: &str) -> PolymerInput {
 
 #[aoc(day14, part1)]
 pub fn solve_part1(input: &PolymerInput) -> u32 {
-    let mut expanded = input.seed.to_string();
-    for _ in 0..10 {
-        expanded = expand_polymer(&expanded, &input.rules);
-    }
-    score_polymer(&expanded)
+    expand_polymer_count(input, 10)
 }
 
-pub fn expand_polymer(seed: &String, rules: &HashMap<String, String>) -> String {
+fn expand_polymer_count(input: &PolymerInput, rounds: usize) -> u32 {
+    let rules = input.rules.iter().map(|entry| {
+        let chars: Vec<char> = entry.0.chars().collect();
+        (entry.0.to_string(), vec![chars[0].to_string() + entry.1, entry.1.to_owned() + &chars[1].to_string()])
+    }).collect::<HashMap<String, Vec<String>>>();
+    let mut pairs = count_pairs(&input.seed);
+    for _ in 0..rounds {
+        pairs = expand_polymer(pairs, &rules);
+    }
+    score_polymer(&pairs, input.seed.chars().nth(0).unwrap(), input.seed.chars().nth(input.seed.len()-1).unwrap())
+}
+
+fn count_pairs(seed: &String) -> HashMap<String, u32> {
     seed.chars()
         .tuple_windows::<(_, _)>()
-        .enumerate()
-        .map(|(index, chars)| {
-            let key: String = vec![chars.0, chars.1].into_iter().collect();
-            let inserted = &rules[&key];
-            if index == 0 {
-                vec![chars.0.to_string(), inserted.to_owned(), chars.1.to_string()].into_iter().collect::<Vec<String>>()
-            } else {
-                vec![inserted.to_owned(), chars.1.to_string()].into_iter().collect::<Vec<String>>()
-            }
-
+        .map(|chars| chars.0.to_string() + &chars.1.to_string())
+        .fold(HashMap::new(), |mut map, key| {
+            *map.entry(key.to_string()).or_insert(0) += 1;
+            map
         })
-        .flatten()
-        .collect()
 }
 
-fn score_polymer(polymer: &String) -> u32 {
-    let counts = polymer.chars()
-        .fold(HashMap::new(), |mut map: HashMap<char, u32>, element| {
-            *map.entry(element).or_insert(0) += 1;
-            map
+pub fn expand_polymer(pairs: HashMap<String, u32>, rules: &HashMap<String, Vec<String>>) -> HashMap<String, u32> {
+    pairs.into_iter().fold(HashMap::new(), |mut output, entry| {
+        rules[&entry.0].iter().for_each(|child| {
+            *output.entry(child.to_string()).or_insert(0) += entry.1
         });
+        output
+    })
+}
+
+fn count_polymer(pairs: &HashMap<String, u32>, first_letter: char, last_letter: char) -> HashMap<char, u32> {
+    let mut counts: HashMap<char, u32> = pairs.iter()
+        .fold(HashMap::new(), |mut map: HashMap<char, u32>, element| {
+            let chars: Vec<char> = element.0.chars().collect();
+            *map.entry(chars[0]).or_insert(0) += element.1;
+            *map.entry(chars[1]).or_insert(0) += element.1;
+            map
+        })
+        .into_iter()
+        .map(|entry| (entry.0, entry.1/2))
+        .collect();
+    counts.entry(first_letter).and_modify(|f| *f += 1);
+    counts.entry(last_letter).and_modify(|f| *f += 1);
+    counts
+}
+fn score_polymer(pairs: &HashMap<String, u32>, first_letter: char, last_letter: char) -> u32 {
+    let counts = count_polymer(pairs, first_letter, last_letter);
     let fields: Vec<(&char, &u32)> = counts.iter().sorted_by(|a, b| a.1.cmp(b.1)).collect();
     fields[fields.len() - 1].1 - fields[0].1
 }

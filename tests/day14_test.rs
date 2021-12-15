@@ -1,4 +1,4 @@
-use aoc2021::day14::{expand_polymer, input_generator};
+use aoc2021::day14::{expand_polymer, input_generator, solve_part1};
 
 #[test]
 fn day14a_example() {
@@ -21,7 +21,7 @@ BC -> B
 CC -> N
 CN -> C";
     let parsed = input_generator(input);
+
     assert_eq!("NNCB", &parsed.seed);
-    let step1 = expand_polymer(&parsed.seed, &parsed.rules);
-    assert_eq!("NCNBCHB", &step1);
+    assert_eq!(1588, solve_part1(&parsed));
 }
