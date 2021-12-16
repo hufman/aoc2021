@@ -31,6 +31,38 @@ pub fn solve_part1(grid: &Vec<Vec<u8>>) -> u32 {
     crawl_grid(grid, &start, &end)
 }
 
+#[aoc(day15, part2)]
+pub fn solve_part2(grid: &Vec<Vec<u8>>) -> u32 {
+    let big_grid = expand_grid(grid);
+    let start = Point{x:0, y:0};
+    let y = big_grid.len() - 1;
+    let end = Point{x: big_grid[y].len() - 1, y: y};
+    crawl_grid(&big_grid, &start, &end)
+}
+
+fn expand_grid(grid: &Vec<Vec<u8>>) -> Vec<Vec<u8>> {
+    let mut output = Vec::with_capacity(grid.len() * 5);
+    for ny in 0..5 {
+        for y in 0..grid.len() {
+            output.push(Vec::with_capacity(grid[y].len() * 5));
+            for nx in 0..5 {
+                for x in 0..grid[y].len() {
+                    output[ny*grid.len() + y].push(wrap_weight(grid[y][x] + (nx as u8) + (ny as u8)))
+                }
+            }
+        }
+    }
+    output
+}
+
+fn wrap_weight(input: u8) -> u8 {
+    if input > 9 {
+        input - 9
+    } else {
+        input
+    }
+}
+
 pub fn crawl_grid(grid: &Vec<Vec<u8>>, start: &Point, end: &Point) -> u32 {
     let mut visit_status = Vec::new();
     for y in 0..grid.len() {
