@@ -1,4 +1,3 @@
-use crate::day15::GridNodeStatus::{PENDING, UNVISITED};
 use crate::helpers::Point;
 
 #[derive(Clone, PartialEq, Debug)]
@@ -85,7 +84,7 @@ pub fn crawl_grid(grid: &Vec<Vec<u8>>, start: &Point, end: &Point) -> u32 {
             pending.clear()
         } else {
             let new_pending: Vec<GridNode> = crawl_around(grid, &next_node.point).into_iter()
-                .filter(|p| visit_status[p.y][p.x] == UNVISITED)
+                .filter(|p| visit_status[p.y][p.x] == GridNodeStatus::UNVISITED)
                 .map(|p| GridNode{point: p, status: GridNodeStatus::PENDING(next_distance + grid[p.y][p.x] as u32)})
                 .collect();
             new_pending.iter().for_each(|n| visit_status[n.point.y][n.point.x] = n.status.clone());
