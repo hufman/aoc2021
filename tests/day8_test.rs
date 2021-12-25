@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use aoc2021::day8::{decode_signal_segments, decode_signals, input_generator};
+use aoc2021::day8::{decode_signal_segments, input_generator};
 
 #[test]
 fn day8b_example() {
