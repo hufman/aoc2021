@@ -34,6 +34,14 @@ pub enum Packet {
     Literal(LiteralPacket),
     Operator(OperatorPacket)
 }
+impl From<&Packet> for u64 {
+    fn from(packet: &Packet) -> Self {
+        match packet {
+            Packet::Literal(p) => p.value,
+            Packet::Operator(p) => p.evaluate()
+        }
+    }
+}
 
 pub struct LiteralPacket {
     pub version: u8,
@@ -76,6 +84,20 @@ impl OperatorPacket {
         }
 
         Packet::Operator(OperatorPacket{version, type_id, sub_packets})
+    }
+
+    fn evaluate(&self) -> u64 {
+        let mut values = self.sub_packets.iter().map(|p| u64::from(p));
+        match self.type_id {
+            0 => values.sum(),
+            1 => values.fold(1, |acc, p| acc*p),
+            2 => values.min().unwrap(),
+            3 => values.max().unwrap(),
+            5 => {let first = values.next().unwrap(); values.fold(first, |left, right| if left > right {1} else {0})},
+            6 => {let first = values.next().unwrap(); values.fold(first, |left, right| if left < right {1} else {0})},
+            7 => {let first = values.next().unwrap(); values.fold(first, |left, right| if left == right {1} else {0})},
+            _ => panic!("Unknown packet type_id {}", self.type_id)
+        }
     }
 }
 
@@ -144,4 +166,9 @@ fn count_versions(packet: &Packet) -> u64 {
         Packet::Operator(p) => p.version as u64 + p.sub_packets
             .iter().map(|sub_packet| count_versions(sub_packet)).sum::<u64>(),
     }
+}
+
+#[aoc(day16, part2)]
+pub fn solve_part2(packet: &Packet) -> u64 {
+    u64::from(packet)
 }
