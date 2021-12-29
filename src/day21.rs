@@ -46,7 +46,7 @@ impl PlayboardPosition {
 
 #[aoc(day21, part1)]
 pub fn solve_part1(input: &[u16]) -> u32 {
-    let mut dice = DeterministicDice{last_roll: 0, total_rolls: 0};
+    let dice = DeterministicDice{last_roll: 0, total_rolls: 0};
     dice_game(dice, input)
 }
 
